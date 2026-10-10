@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Before We Act — Team-Response Beliefs for Multi-Robot Manipulation</title>
+  <meta name="description" content="CARE learns a team-response belief: a robot's local prediction of how much each candidate action gains or loses because teammates adapt to it. Project page for the paper Before We Act.">
+  <meta property="og:title" content="Before We Act — Learning Action-Conditioned Team-Response Beliefs for Decentralized Multi-Robot Manipulation">
+  <meta property="og:description" content="Before acting, predict what the teammate's response contributes. CARE turns that prediction into a training target and a calibrated action selector.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://jeong-zju.github.io/care/assets/og.jpg">
+  <meta property="og:url" content="https://jeong-zju.github.io/care/">
+  <link rel="canonical" href="https://jeong-zju.github.io/care/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body id="top">
+<a class="skip" href="#overview">Skip to content</a>
+
+<header class="nav" data-nav>
+  <a class="brand" href="#top">Before We Act<span>&nbsp;· CARE</span></a>
+  <nav aria-label="Sections">
+    <a href="#overview">Overview</a>
+    <a href="#method">Method</a>
+    <a href="#results">Results</a>
+    <a href="#sim">Simulation</a>
+    <a href="#real">Real robots</a>
+    <a href="#bibtex">BibTeX</a>
+    <a class="nav-cta" href="assets/paper/before-we-act.pdf">Paper</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============================ HERO ============================ -->
+<section class="hero">
+  <p class="eyebrow">CARE · Cooperative Action–Response Belief Estimation</p>
+  <h1>Before We Act</h1>
+  <p class="subtitle">Learning Action-Conditioned Team-Response Beliefs <span class="nowrap">for Decentralized</span> Multi-Robot Manipulation</p>
+
+  <!-- Public author block, matching the arXiv manuscript. -->
+  <div class="authors">
+    <p class="author-names"><a href="https://zihaoli.dev/">Zihao Li</a><sup>1,2</sup>, Yanan ZHOU<sup>1</sup>, Ranpeng Qiu<sup>2</sup>, Guoqiang Ren<sup>2</sup>, Weiming Zhi<sup>1,*</sup></p>
+    <p class="affils"><sup>1</sup>The University of Sydney&nbsp;&nbsp;<sup>2</sup>Zeno AI</p>
+    <p class="affils"><sup>*</sup>Corresponding author: <a href="mailto:weiming.zhi@sydney.edu.au">Weiming Zhi</a></p>
+    <p class="venue">Preprint · 2026</p>
+  </div>
+
+  <div class="links">
+    <a class="btn primary" href="assets/paper/before-we-act.pdf">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Paper
+    </a>
+    <a class="btn" href="#" aria-disabled="true" title="arXiv link will be added when the preprint is public">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4L4 20"/></svg>arXiv<span class="soon">soon</span>
+    </a>
+    <a class="btn" href="#" aria-disabled="true" title="Code release will be linked here">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4L3 12l5 8M16 4l5 8-5 8"/></svg>Code<span class="soon">soon</span>
+    </a>
+    <a class="btn" href="#real">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M10 9l5 3-5 3z"/></svg>Video
+    </a>
+    <a class="btn" href="#bibtex">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h4v4H7zM13 7h4v4h-4z"/><path d="M11 11c0 3-1 4-4 5M17 11c0 3-1 4-4 5"/></svg>BibTeX
+    </a>
+  </div>
+
+  <figure class="hero-video">
+    <video muted loop playsinline autoplay preload="metadata"
+           poster="assets/video/folding-bed-poster.jpg"
+           data-src-1080="assets/video/folding-bed-1080p.mp4"
+           data-src-720="assets/video/folding-bed-720p.mp4"
+           aria-label="Two robots folding a quilt together under the CARE policy">
+      <source src="assets/video/folding-bed-720p.webm" type="video/webm">
+      <source src="assets/video/folding-bed-1080p.mp4" type="video/mp4">
+    </video>
+    <figcaption>
+      <span class="pill">Folding Bed · physical dual-robot task</span>
+      <span>Both robots run the same CARE policy from their own camera and joint history. The blue robot holds the quilt edge and waits while the green robot regrasps.</span>
+    </figcaption>
+    <button class="video-toggle" type="button" data-video-toggle aria-label="Pause video">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="ic-pause" d="M8 5v14M16 5v14"/><path class="ic-play" d="M8 5l11 7-11 7z"/></svg>
+    </button>
+  </figure>
+
+  <p class="claim">Whether an action is useful often depends on how teammates respond to it. <span class="dim">CARE predicts that response before acting, from local history alone.</span></p>
+
+  <div class="kpis" role="list">
+    <div class="kpi" role="listitem">
+      <p class="kpi-label">RoboFactory · six collaborative tasks</p>
+      <p class="kpi-value">85.8<span>%</span></p>
+      <p class="kpi-delta"><b>+13.3</b> over LatentToM, the best collaboration-specific baseline</p>
+    </div>
+    <div class="kpi" role="listitem">
+      <p class="kpi-label">Physical dual-robot tasks · 40 trials</p>
+      <p class="kpi-value">92.5<span>%</span></p>
+      <p class="kpi-delta"><b>+35.0 percentage points</b> over π<sub>0.5</sub></p>
+    </div>
+    <div class="kpi" role="listitem">
+      <p class="kpi-label">Nominal action overridden</p>
+      <p class="kpi-value">6<span>%</span></p>
+      <p class="kpi-delta">of control steps, recovering <b>half</b> of the available headroom</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ OVERVIEW ============================ -->
+<section class="section" id="overview">
+  <div class="section-head">
+    <p class="eyebrow">Overview</p>
+    <h2>The best action depends on <span class="dim">what the teammate will do next.</span></h2>
+  </div>
+
+  <div class="cols">
+    <div class="prose">
+      <p>Consider two robots carrying an object. One of them has to decide when to turn. Turning now shortens its own path, but it can destabilize the object if the partner is still regrasping. Waiting briefly makes little direct progress, yet it lets the partner finish the grasp so the team can proceed. The uncertainty that matters is what the team will do <em>in response to</em> the next action. The same decision arises when releasing an object in a handoff, yielding a shared workspace, or synchronizing a lift.</p>
+      <p>We call a robot's prediction of this action-dependent effect a <strong>team-response belief</strong>. For each candidate action, it describes the likely gain or loss in team utility that comes from letting teammates adapt, compared with teammates that keep their nominal behavior. It is conditioned on the candidate action, inferred from the robot's own history, and keeps its uncertainty. It needs no semantic label such as "the partner is ready" and no reconstruction of the partner's hidden intent.</p>
+      <p>Ordinary demonstrations provide almost no supervision for this belief. A successful trajectory shows the action that was taken and the response that followed, but nothing about how teammates would have responded to the alternatives. <strong>CARE</strong> (Cooperative Action–Response Belief Estimation) makes the response contribution an explicit training target through <em>paired interaction augmentation</em>, learns a predictive belief encoder that conditions nominal actions, then trains a candidate-conditioned response readout with the encoder and action generator frozen. Calibrated selection chooses an alternative or retains the nominal action at execution.</p>
+    </div>
+    <aside class="contrib">
+      <p class="contrib-title">Three contributions</p>
+      <ol>
+        <li><b>A definition and a target.</b> The team-response belief, with a concrete supervisory signal from matched reactive and replay continuations.</li>
+        <li><b>An analysis.</b> When response overcomes a candidate's direct disadvantage, and how source and estimation error bound the recoverable gain under conservative selection.</li>
+        <li><b>A local evaluator and a protocol.</b> Candidate selection from local history without rollouts, evaluated so that response supervision is separated from proposal quality, total-value learning, and access to the augmented outcomes.</li>
+      </ol>
+    </aside>
+  </div>
+
+  <!-- Same start, two choices -->
+  <div class="compare" data-compare>
+    <div class="compare-head">
+      <div>
+        <p class="eyebrow">Same start, two choices</p>
+        <h3>Judged by its own motion, the default action is not worse. <span class="dim">It becomes worse once the teammate's reaction counts.</span></h3>
+      </div>
+      <div class="seg" role="tablist" aria-label="Task">
+        <button role="tab" aria-selected="true" data-task="lb">Lift Barrier</button>
+        <button role="tab" aria-selected="false" data-task="tp">Take Photo</button>
+      </div>
+    </div>
+    <div class="compare-grid">
+      <figure class="cmp-item">
+        <img data-cmp="initial" src="assets/img/sim/lb-0.jpg" alt="Initial configuration" loading="lazy">
+        <figcaption><span class="pill neutral">Same initial configuration</span><span data-cmp-cap="initial"></span></figcaption>
+      </figure>
+      <figure class="cmp-item">
+        <img data-cmp="fail" src="assets/img/sim/lb-fail.jpg" alt="Outcome of the default action" loading="lazy">
+        <figcaption><span class="pill bad" data-cmp-pill="fail"></span><span data-cmp-cap="fail"></span></figcaption>
+      </figure>
+      <figure class="cmp-item">
+        <img data-cmp="care" src="assets/img/sim/lb-2.jpg" alt="Outcome of the CARE selection" loading="lazy">
+        <figcaption><span class="pill good" data-cmp-pill="care"></span><span data-cmp-cap="care"></span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ METHOD ============================ -->
+<section class="section band" id="method">
+  <div class="section-head">
+    <p class="eyebrow">Method</p>
+    <h2>Predict what the response contributes, <span class="dim">then act on it with a calibrated bound.</span></h2>
+  </div>
+
+  <ol class="steps">
+    <li>
+      <span class="step-n">01</span>
+      <h3>Propose</h3>
+      <p>A predictive belief encoder learns the interaction from local history and conditions the nominal action <i>u</i><sup>0</sup>. The encoder and action generator are then frozen. <i>K</i>&nbsp;=&nbsp;6 candidates include this nominal chunk and local behavioral alternatives such as waiting, retreating, and slowing down.</p>
+    </li>
+    <li>
+      <span class="step-n">02</span>
+      <h3>Label with paired interaction augmentation</h3>
+      <p>From a common state, each candidate is compared with the nominal action under two teammate behaviors: <b class="c-teal">reactive</b> teammates keep running their policies, <b class="c-gray">replay</b> teammates re-issue the commands recorded under the nominal action. The reactive contrast is the total advantage <i>A<sub>k</sub></i>, the replay contrast is the direct advantage <i>D<sub>k</sub></i>, and their difference <i>R<sub>k</sub></i> is the response label. The demonstrations stay in the training set.</p>
+    </li>
+    <li>
+      <span class="step-n">03</span>
+      <h3>Select with a calibrated lower bound</h3>
+      <p>A candidate-conditioned response readout uses the frozen predictive representation to predict quantiles of <i>D</i>, <i>R</i> and <i>A</i> plus an adverse-event probability for every candidate. Conformal calibration on held-out families turns the lower quantile of <i>A</i> into a lower bound. The best feasible alternative runs only if its bound clears the margin; otherwise the robot keeps <i>u</i><sup>0</sup>. Execution uses local history only, with no rollouts.</p>
+    </li>
+  </ol>
+
+  <!-- Interactive decomposition -->
+  <div class="decomp" data-decomp>
+    <div class="decomp-grid" aria-label="Paired interaction augmentation: four matched outcomes">
+      <div class="dg-corner"><span>same state,<br>same seed</span></div>
+      <div class="dg-colhead">Nominal action <i>u</i><sup>0</sup></div>
+      <div class="dg-colhead accent">Candidate <i>u<sup>k</sup></i></div>
+      <div class="dg-rowhead teal"><b>Reactive</b><small>teammates respond</small></div>
+      <div class="dg-tile" data-tile="r0"><span class="dg-y"><i>Y</i><sub>0</sub><sup>R</sup></span><small>partner reacts to <i>u</i><sup>0</sup></small></div>
+      <div class="dg-tile" data-tile="rk"><span class="dg-y"><i>Y<sub>k</sub></i><sup>R</sup></span><small>partner reacts to <i>u<sup>k</sup></i></small></div>
+      <div class="dg-rowhead gray"><b>Replay</b><small>recorded commands</small></div>
+      <div class="dg-tile" data-tile="p0"><span class="dg-y"><i>Y</i><sub>0</sub><sup>P</sup></span><small>partner replays its trace</small></div>
+      <div class="dg-tile" data-tile="pk"><span class="dg-y"><i>Y<sub>k</sub></i><sup>P</sup></span><small>partner replays its trace</small></div>
+    </div>
+    <div class="decomp-side">
+      <p class="eyebrow">One paired contrast, three labels</p>
+      <div class="chips" role="tablist" aria-label="Quantity">
+        <button role="tab" data-q="A" aria-selected="true"><i>A<sub>k</sub></i> total advantage</button>
+        <button role="tab" data-q="D" aria-selected="false"><i>D<sub>k</sub></i> direct advantage</button>
+        <button role="tab" data-q="R" aria-selected="false"><i>R<sub>k</sub></i> response</button>
+      </div>
+      <p class="decomp-formula" data-formula aria-live="polite"></p>
+      <p class="decomp-text" data-text></p>
+      <p class="decomp-note">Utility <i>U</i> is a fixed weighted sum of progress, success, time to success and coordination penalties over a 16-step horizon. Collisions and drops are supervised separately as adverse events.</p>
+    </div>
+  </div>
+
+  <figure class="figure">
+    <img src="assets/fig/teaser.png" alt="From the same local history, CARE compares candidate and nominal actions under reactive and replayed teammate behavior during training; at execution, local predictions inform candidate selection with calibrated fallback." loading="lazy">
+    <figcaption><b>Before acting, predict what teammate response contributes.</b> From the same local history (left), CARE compares candidate and nominal actions under reactive and replayed teammate behavior during training (center). The difference between total advantage <i>A<sub>k</sub></i> and direct advantage <i>D<sub>k</sub></i> supplies the response label <i>R<sub>k</sub></i>. At execution (right), local predictions of this contribution inform candidate selection, with calibrated fallback to the nominal action. <a href="assets/fig/teaser.png" target="_blank" rel="noopener">Full size ↗</a></figcaption>
+  </figure>
+
+  <figure class="figure">
+    <img src="assets/fig/method.png" alt="CARE architecture: predictive belief encoder, action proposals, candidate-conditioned response readout, and calibrated selector." loading="lazy">
+    <figcaption><b>CARE architecture.</b> The predictive belief encoder represents local history and conditions the nominal action. Paired interaction augmentation supervises direct advantage <i>D</i>, response interaction <i>R</i> and total advantage <i>A</i> in a candidate-conditioned response readout. The encoder and action generator are frozen during response learning. Held-out calibration provides the correction used to select a feasible candidate by its total-advantage lower bound, with fallback to <i>u</i><sup>0</sup>. <a href="assets/fig/method.png" target="_blank" rel="noopener">Full size ↗</a></figcaption>
+  </figure>
+
+  <div class="theory">
+    <div class="theory-card">
+      <p class="eyebrow">Identifiability</p>
+      <h3>Paired supervision identifies the belief.</h3>
+      <p>Two teammate behaviors can agree on every observed nominal continuation and still respond differently to an untried action, so nominal data alone cannot tell them apart. Matched reactive and replay branches turn <i>R<sub>k</sub></i> into draws from the belief, and the pinball loss recovers its conditional quantiles.</p>
+    </div>
+    <div class="theory-card">
+      <p class="eyebrow">Decision value</p>
+      <h3>Response matters when it flips the best action.</h3>
+      <p>Response information has decision value Γ(<i>H</i>) exactly when some candidate's relative response gain exceeds its direct disadvantage. A mean-based belief choice recovers at least Γ&nbsp;−&nbsp;2<i>e</i>, where <i>e</i> sums the source-fidelity error and the estimation errors of the direct and response means.</p>
+    </div>
+    <div class="theory-card">
+      <p class="eyebrow">Calibrated intervention</p>
+      <h3>Overrides come with coverage.</h3>
+      <p>With exchangeable calibration and test families, the calibrated lower bound covers every candidate's realized advantage with probability at least 1&nbsp;−&nbsp;α. A released alternative has paired utility above the margin δ on that coverage event. The guarantee concerns the paired reference distribution: source fidelity, exchangeability, and teammates departing from the reference policy at execution can affect deployment.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ RESULTS ============================ -->
+<section class="section" id="results">
+  <div class="section-head">
+    <p class="eyebrow">Results</p>
+    <h2>Strong where the preferred action depends on the partner's timing, <span class="dim">and honest about where it does not.</span></h2>
+  </div>
+
+  <figure class="chart" data-chart="main">
+    <div class="chart-head">
+      <div>
+        <p class="chart-title">Closed-loop success rate</p>
+        <p class="chart-sub">RoboFactory (six tasks, two to four robots) and the MARS Control Track (four hidden-seed tasks). All policies share the same arm-local observations, action interface and control rate.</p>
+      </div>
+      <div class="chart-controls">
+        <div class="seg small" role="tablist" aria-label="Benchmark">
+          <button role="tab" aria-selected="true" data-bench="rf">RoboFactory</button>
+          <button role="tab" aria-selected="false" data-bench="mars">MARS</button>
+          <button role="tab" aria-selected="false" data-bench="mean">Mean</button>
+        </div>
+        <label class="select"><span class="sr-only">Task</span><select data-task-select aria-label="Task"></select></label>
+        <div class="seg small" role="tablist" aria-label="View">
+          <button role="tab" aria-selected="true" data-view="chart">Chart</button>
+          <button role="tab" aria-selected="false" data-view="table">Table</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-body" data-chart-body></div>
+    <div class="chart-table" data-chart-table hidden></div>
+    <figcaption>SR in %, 20 seeded rollouts per task, so single-task SR moves in five-point steps. † adapted to the shared decentralized interface: LatentToM without latent exchange, GauDP without its global Gaussian scene. The CARE row runs the complete recipe including the calibrated selector; the same proposals with the evaluator switched off reach 80.8 on RoboFactory.</figcaption>
+  </figure>
+
+  <div class="prose wide">
+    <p>On RoboFactory, CARE achieves the highest average success among the evaluated policies. Most of the gain comes from <b>Take Photo</b> and <b>Pass Shoe</b>, where one robot must hold a pose or an object until its partner is in position and where maintaining support and waiting for a partner are central to completion. CARE falls behind on Place Food, Camera Alignment and Long Pipeline Delivery, where precise positioning or a long sequential chain dominates and there is less for the interaction contrast to change. On MARS, absolute performance is low for all policies; most of CARE's margin comes from Strike Cube Hard, whose success depends on a single well-timed joint impact, and CARE is the only policy with any successes on Four Robots Stack Cube.</p>
+  </div>
+
+  <!-- Physical evaluation -->
+  <div class="results-row">
+    <figure class="chart" data-chart="real">
+      <div class="chart-head">
+        <div>
+          <p class="chart-title">Physical dual-robot evaluation</p>
+          <p class="chart-sub">Successful trials out of 20 per task. Same local observations, action space, control frequency and task budget for every policy.</p>
+        </div>
+        <div class="chart-controls">
+          <div class="seg small" role="tablist" aria-label="View">
+            <button role="tab" aria-selected="true" data-view="chart">Chart</button>
+            <button role="tab" aria-selected="false" data-view="table">Table</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-body multiples" data-chart-body></div>
+      <div class="chart-table" data-chart-table hidden></div>
+      <figcaption>The selector-off control retains the predictive encoder and nominal path. Selection adds four successful trials, increasing average success from 82.5% to 92.5%. All CARE arms share a checkpoint and use their own local histories.</figcaption>
+    </figure>
+    <div class="kpis compact" role="list">
+      <div class="kpi" role="listitem"><p class="kpi-label">CARE, selector off</p><p class="kpi-value">82.5<span>%</span></p><p class="kpi-delta">the predictive encoder and nominal path remain active</p></div>
+      <div class="kpi" role="listitem"><p class="kpi-label">Physical override rate</p><p class="kpi-value">5.8<span>%</span></p><p class="kpi-delta">selection adds four successful trials across both tasks</p></div>
+      <div class="kpi" role="listitem"><p class="kpi-label">Folding Bed</p><p class="kpi-value">20<span>/20</span></p><p class="kpi-delta">the fold cannot continue until the partner has regrasped</p></div>
+    </div>
+  </div>
+
+  <!-- Mechanism -->
+  <div class="section-head sub">
+    <p class="eyebrow">Mechanism studies · fixed proposals</p>
+    <h2 class="h3">Is it the belief, or just a better policy? <span class="dim">Hold the proposals fixed and change one thing at a time.</span></h2>
+  </div>
+
+  <div class="mech-grid">
+    <figure class="chart" data-chart="selection">
+      <div class="chart-head">
+        <div>
+          <p class="chart-title">Ranking matters more than acting often</p>
+          <p class="chart-sub">Fraction of oracle headroom recovered by each selector over the shared candidate set, with its override rate.</p>
+        </div>
+        <div class="chart-controls"><div class="seg small" role="tablist" aria-label="View"><button role="tab" aria-selected="true" data-view="chart">Chart</button><button role="tab" aria-selected="false" data-view="table">Table</button></div></div>
+      </div>
+      <div class="chart-body" data-chart-body></div>
+      <div class="chart-table" data-chart-table hidden></div>
+      <figcaption>Random selection overrides at almost every step and still recovers a seventh of the oracle gain, so useful alternatives exist. CARE overrides at about one step in seventeen, recovers half of the headroom and has the lowest regret.</figcaption>
+    </figure>
+
+    <figure class="chart" data-chart="supervision">
+      <div class="chart-head">
+        <div>
+          <p class="chart-title">Explicit response supervision helps</p>
+          <p class="chart-sub">Response mean absolute error, lower is better. The table reports the snapshot split and deployed seed. Total-only and Direct-only have no response predictor and are omitted from this error chart. All variants share proposals, representation, paired data, and selection rule.</p>
+        </div>
+        <div class="chart-controls"><div class="seg small" role="tablist" aria-label="View"><button role="tab" aria-selected="true" data-view="chart">Chart</button><button role="tab" aria-selected="false" data-view="table">Table</button></div></div>
+      </div>
+      <div class="chart-body" data-chart-body></div>
+      <div class="chart-table" data-chart-table hidden></div>
+      <figcaption>Explicit response supervision improves ranking agreement from 0.603 to 0.671 and reduces regret from 0.0061 to 0.0048 relative to information-matched branch-utility supervision. Response MAE uses the response median for CARE variants and contrasts of marginal medians for <i>A</i>+<i>D</i> and branch utilities; medians do not commute with subtraction.</figcaption>
+    </figure>
+
+    <figure class="chart span2" data-chart="selector">
+      <div class="chart-head">
+        <div>
+          <p class="chart-title">Calibration turns interventions into gain</p>
+          <p class="chart-sub">Closed-loop success against override rate for selection rules that share the same trained scorer.</p>
+        </div>
+        <div class="chart-controls"><div class="seg small" role="tablist" aria-label="View"><button role="tab" aria-selected="true" data-view="chart">Chart</button><button role="tab" aria-selected="false" data-view="table">Table</button></div></div>
+      </div>
+      <div class="chart-body" data-chart-body></div>
+      <div class="chart-table" data-chart-table hidden></div>
+      <figcaption>Acting on the posterior mean overrides at almost every step and cuts success nearly in half. An uncalibrated lower quantile still finishes below the nominal path. Candidate-wise calibration reaches the highest success while overriding at one step in six; the simultaneous family-wise rule keeps five of those points while overriding a third as often, and it is the rule with the coverage guarantee. The safety filter changes neither rate.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================ SIMULATION ============================ -->
+<section class="section band" id="sim">
+  <div class="section-head">
+    <p class="eyebrow">Simulation · RoboFactory</p>
+    <h2>Six collaborative tasks, <span class="dim">two to four robots, one shared policy.</span></h2>
+    <p class="section-lede">Each arm receives only its own RGB history, proprioception, executed-action history and the shared task instruction. Teammate observations and simulator state are never available at execution. Frames are numbered in temporal order; the badge is CARE's closed-loop success over 20 rollouts.</p>
+  </div>
+  <div class="tasks" data-tasks></div>
+  <p class="mars-line"><b>MARS Control Track</b> (hidden seeds, trained on its own 600 demonstrations): Place Cube in Cup <span class="mono">15%</span> · Strike Cube Hard <span class="mono">95%</span> · Three Robots Place Shoes <span class="mono">10%</span> · Four Robots Stack Cube <span class="mono">20%</span> · average <span class="mono">35.0%</span>, the highest of all nine policies.</p>
+</section>
+
+<!-- ============================ REAL ROBOTS ============================ -->
+<section class="section" id="real">
+  <div class="section-head">
+    <p class="eyebrow">Real robots</p>
+    <h2>Holding and waiting for the teammate <span class="dim">is part of the correct action.</span></h2>
+    <p class="section-lede">Frozen policies evaluated on two physical two-robot tasks against ACT and π<sub>0.5</sub>. Both robots run the same CARE weights from their own observations. The advantage appears where the task cannot continue until the partner is ready, and shrinks where single-arm manipulation dominates.</p>
+  </div>
+
+  <div class="real-grid">
+    <article class="real-card">
+      <figure class="real-video">
+        <video controls muted loop playsinline preload="metadata"
+               poster="assets/video/folding-bed-poster.jpg"
+               data-src-1080="assets/video/folding-bed-1080p.mp4"
+               data-src-720="assets/video/folding-bed-720p.mp4"
+               data-chapter-video="folding">
+          <source src="assets/video/folding-bed-720p.webm" type="video/webm">
+      <source src="assets/video/folding-bed-1080p.mp4" type="video/mp4">
+        </video>
+      </figure>
+      <div class="real-text">
+        <p class="eyebrow">Folding Bed · <span class="mono">20/20</span></p>
+        <h3>Two robots fold a quilt in two passes.</h3>
+        <p>The robots grasp the quilt edge, pull it over for the first fold, then regrasp for the second. One arm holds its edge and waits while its partner approaches and regrasps before the next fold. ACT succeeds in 12 of 20 trials and π<sub>0.5</sub> in 9.</p>
+        <ul class="chapters" data-chapters="folding">
+          <li><button type="button" data-t="4">0:04</button> both robots grasp the quilt edge</li>
+          <li><button type="button" data-t="12">0:12</button> first fold</li>
+          <li><button type="button" data-t="34">0:34</button> blue holds the folded edge and waits while green regrasps</li>
+          <li><button type="button" data-t="44">0:44</button> second fold</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="real-card">
+      <figure class="real-video">
+        <video controls muted loop playsinline preload="metadata"
+               poster="assets/video/opening-box-poster.jpg"
+               data-src-1080="assets/video/opening-box-1080p.mp4"
+               data-src-720="assets/video/opening-box-720p.mp4"
+               data-chapter-video="opening">
+          <source src="assets/video/opening-box-720p.webm" type="video/webm">
+        <source src="assets/video/opening-box-1080p.mp4" type="video/mp4">
+        </video>
+      </figure>
+      <div class="real-text">
+        <p class="eyebrow">Opening Box · <span class="mono">17/20</span></p>
+        <h3>Open the box, retrieve the target, put it down.</h3>
+        <p>The left arm opens the lid; the right arm takes over supporting it and waits while its partner grasps the target inside and places it on the table. π<sub>0.5</sub> is comparatively strong here (14 of 20), and this is where CARE's few failures occur.</p>
+        <ul class="chapters" data-chapters="opening">
+          <li><button type="button" data-t="2">0:02</button> left arm opens the lid</li>
+          <li><button type="button" data-t="9">0:09</button> right arm takes over the lid and waits</li>
+          <li><button type="button" data-t="16">0:16</button> left arm reaches in and grasps the target</li>
+          <li><button type="button" data-t="23">0:23</button> left arm lifts it out and places it</li>
+        </ul>
+      </div>
+    </article>
+  </div>
+
+  <div class="keyframes">
+    <div class="kf-row">
+      <p class="kf-title">Opening Box</p>
+      <ol class="kf-strip">
+        <li><img src="assets/img/real/opening-1.jpg" alt="" loading="lazy"><p><span class="arm">left</span> <b class="v-act">opening</b> the box<br><span class="arm">right</span> <b class="v-wait">waiting</b> beside the box</p></li>
+        <li><img src="assets/img/real/opening-2.jpg" alt="" loading="lazy"><p><span class="arm">left</span> <b class="v-act">grasping</b> the target<br><span class="arm">right</span> <b class="v-wait">supporting &amp; waiting</b></p></li>
+        <li><img src="assets/img/real/opening-3.jpg" alt="" loading="lazy"><p><span class="arm">left</span> <b class="v-act">placing</b> the target<br><span class="arm">right</span> <b class="v-wait">supporting &amp; waiting</b></p></li>
+        <li><img src="assets/img/real/opening-4.jpg" alt="" loading="lazy"><p><span class="arm">left</span> <b class="v-move">moving back</b> to home<br><span class="arm">right</span> <b class="v-move">moving back</b> to home</p></li>
+      </ol>
+    </div>
+    <div class="kf-row">
+      <p class="kf-title">Folding Bed</p>
+      <ol class="kf-strip">
+        <li><img src="assets/img/real/folding-1.jpg" alt="" loading="lazy"><p><span class="arm">blue</span> <b class="v-act">grasping</b> the quilt<br><span class="arm">green</span> <b class="v-act">grasping</b> the quilt</p></li>
+        <li><img src="assets/img/real/folding-2.jpg" alt="" loading="lazy"><p><span class="arm">blue</span> <b class="v-move">moving</b> to fold<br><span class="arm">green</span> <b class="v-move">moving</b> to fold</p></li>
+        <li><img src="assets/img/real/folding-3.jpg" alt="" loading="lazy"><p><span class="arm">blue</span> <b class="v-wait">waiting</b> for green<br><span class="arm">green</span> <b class="v-act">approaching &amp; regrasping</b></p></li>
+        <li><img src="assets/img/real/folding-4.jpg" alt="" loading="lazy"><p><span class="arm">blue</span> <b class="v-move">moving</b> to 2<sup>nd</sup> fold<br><span class="arm">green</span> <b class="v-move">moving</b> to 2<sup>nd</sup> fold</p></li>
+      </ol>
+    </div>
+    <p class="kf-legend"><b class="v-act">manipulating</b> · <b class="v-wait">supporting or waiting</b> · <b class="v-move">moving</b></p>
+  </div>
+</section>
+
+<!-- ============================ LIMITATIONS + BIBTEX ============================ -->
+<section class="section band" id="bibtex">
+  <div class="cols">
+    <div class="prose">
+      <p class="eyebrow">Scope and limitations</p>
+      <p>Team-response beliefs depend on what the local history reveals about the partner, on which actions are available and on how team utility is measured. Weak proposals leave little gain to recover, and a short horizon can miss delayed reactions. The paired contrast depends on the nominal trace and may put replayed teammates in states that never occur in ordinary interaction, so augmentation bias, unseen partners and policy-induced distribution shift can affect both belief accuracy and calibration. CARE already conditions nominal actions on predictive beliefs. Future work can adapt proposal distributions, extend response learning to changing teammate policies, and combine selection with runtime monitoring.</p>
+    </div>
+    <div class="bib">
+      <p class="eyebrow">BibTeX</p>
+      <pre id="bib-text">@misc{li2026beforeweact,
+  title  = {Before We Act: Learning Action-Conditioned
+            Team-Response Beliefs for Decentralized
+            Multi-Robot Manipulation},
+  author = {Li, Zihao and Zhou, Yanan and Qiu, Ranpeng and
+            Ren, Guoqiang and Zhi, Weiming},
+  year   = {2026},
+  note   = {Preprint},
+  url    = {https://jeong-zju.github.io/care/}
+}</pre>
+      <button class="btn small" type="button" data-copy="#bib-text">Copy BibTeX</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <p>Before We Act · CARE. Layout inspired by the project pages of <a href="https://cat3d.github.io/" rel="noopener">CAT3D</a> and <a href="https://diffusionillusions.com/" rel="noopener">Diffusion Illusions</a>.</p>
+  <p><a href="https://zihaoli.dev/" rel="noopener">zihaoli.dev</a> · <a href="https://www.zenobot.ai/" rel="noopener">ZENO AI</a></p>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
